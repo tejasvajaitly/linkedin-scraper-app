@@ -1,249 +1,3 @@
-// "use client";
-// import useMeasure from "react-use-measure";
-// import React, { useEffect, useState } from "react";
-// import { TransitionPanel } from "@/components/ui/transition-panel";
-
-// function Button({
-//   onClick,
-//   children,
-// }: {
-//   onClick: () => void;
-//   children: React.ReactNode;
-// }) {
-//   return (
-//     <button
-//       onClick={onClick}
-//       type="button"
-//       className="relative flex h-8 shrink-0 scale-100 select-none appearance-none items-center justify-center rounded-lg border border-zinc-950/10 bg-transparent px-2 text-sm text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-2 active:scale-[0.98] dark:border-zinc-50/10 dark:text-zinc-50 dark:hover:bg-zinc-800"
-//     >
-//       {children}
-//     </button>
-//   );
-// }
-// export function TransitionPanelCard() {
-//   const [activeIndex, setActiveIndex] = useState(0);
-//   const [direction, setDirection] = useState(1);
-//   const [ref, bounds] = useMeasure();
-
-//   // Form state
-//   const [linkedinUrl, setLinkedinUrl] = useState("");
-//   const [templateName, setTemplateName] = useState("");
-//   const [selectedFields, setSelectedFields] = useState<string[]>([]);
-//   const [authCookie, setAuthCookie] = useState("");
-
-//   const AVAILABLE_FIELDS = ["url", "name", "company", "location", "headline"];
-
-//   const FEATURES = [
-//     {
-//       title: "LinkedIn URL",
-//       component: (
-//         <div className="space-y-4">
-//           <input
-//             type="text"
-//             value={linkedinUrl}
-//             onChange={(e) => setLinkedinUrl(e.target.value)}
-//             placeholder="Enter LinkedIn Profile URL"
-//             className="w-full p-2 border rounded dark:bg-zinc-600 dark:border-zinc-500"
-//           />
-//         </div>
-//       ),
-//     },
-//     {
-//       title: "Template Name",
-//       component: (
-//         <div className="space-y-4">
-//           <input
-//             type="text"
-//             value={templateName}
-//             onChange={(e) => setTemplateName(e.target.value)}
-//             placeholder="Enter Template Name"
-//             className="w-full p-2 border rounded dark:bg-zinc-600 dark:border-zinc-500"
-//           />
-//         </div>
-//       ),
-//     },
-//     {
-//       title: "Select Fields",
-//       component: (
-//         <div className="space-y-4">
-//           {selectedFields.map((field, index) => (
-//             <div key={index} className="flex gap-2">
-//               <select
-//                 value={field}
-//                 onChange={(e) => {
-//                   const newFields = [...selectedFields];
-//                   newFields[index] = e.target.value;
-//                   setSelectedFields(newFields);
-//                 }}
-//                 className="w-full p-2 border rounded dark:bg-zinc-600 dark:border-zinc-500"
-//               >
-//                 {AVAILABLE_FIELDS.filter(
-//                   (f) => !selectedFields.includes(f) || f === field
-//                 ).map((field) => (
-//                   <option key={field} value={field}>
-//                     {field.charAt(0).toUpperCase() + field.slice(1)}
-//                   </option>
-//                 ))}
-//               </select>
-//               <button
-//                 onClick={() => {
-//                   const newFields = selectedFields.filter(
-//                     (_, i) => i !== index
-//                   );
-//                   setSelectedFields(newFields);
-//                 }}
-//                 className="px-3 py-1 text-red-500 border rounded"
-//               >
-//                 -
-//               </button>
-//             </div>
-//           ))}
-//           {selectedFields.length < AVAILABLE_FIELDS.length && (
-//             <button
-//               onClick={() =>
-//                 setSelectedFields([
-//                   ...selectedFields,
-//                   AVAILABLE_FIELDS.find((f) => !selectedFields.includes(f)) ||
-//                     "",
-//                 ])
-//               }
-//               className="w-full p-2 text-green-500 border rounded"
-//             >
-//               + Add Field
-//             </button>
-//           )}
-//         </div>
-//       ),
-//     },
-//     {
-//       title: "LinkedIn Authentication",
-//       component: (
-//         <div className="space-y-4">
-//           <div className="mb-4">
-//             <a
-//               href="#" // Replace with actual video link
-//               target="_blank"
-//               rel="noopener noreferrer"
-//               className="text-blue-500 hover:underline"
-//             >
-//               Watch how to get your LinkedIn authentication cookie
-//             </a>
-//           </div>
-//           <textarea
-//             value={authCookie}
-//             onChange={(e) => setAuthCookie(e.target.value)}
-//             placeholder="Paste your LinkedIn authentication cookie here"
-//             className="w-full p-2 border rounded dark:bg-zinc-600 dark:border-zinc-500"
-//             rows={4}
-//           />
-//         </div>
-//       ),
-//     },
-//   ];
-
-//   const handleSetActiveIndex = (newIndex: number) => {
-//     setDirection(newIndex > activeIndex ? 1 : -1);
-//     setActiveIndex(newIndex);
-//   };
-
-//   useEffect(() => {
-//     if (activeIndex < 0) setActiveIndex(0);
-//     if (activeIndex >= FEATURES.length) setActiveIndex(FEATURES.length - 1);
-//   }, [activeIndex]);
-
-//   const variants = {
-//     enter: (direction: number) => ({
-//       x: direction > 0 ? 364 : -364,
-//       opacity: 0,
-//     }),
-//     center: {
-//       zIndex: 1,
-//       x: 0,
-//       opacity: 1,
-//     },
-//     exit: (direction: number) => ({
-//       zIndex: 0,
-//       x: direction < 0 ? 364 : -364,
-//       opacity: 0,
-//       position: "absolute",
-//       top: 0,
-//       left: 0,
-//       width: "100%",
-//     }),
-//   };
-
-//   const handleNext = () => {
-//     if (activeIndex === FEATURES.length - 1) {
-//       // Navigate to results page with collected data
-//       console.log({
-//         linkedinUrl,
-//         templateName,
-//         selectedFields,
-//         authCookie,
-//       });
-//       // Add your navigation logic here
-//       return;
-//     }
-//     handleSetActiveIndex(activeIndex + 1);
-//   };
-
-//   return (
-//     <div className="w-[364px] overflow-hidden rounded-xl border border-zinc-950/10 bg-white dark:bg-zinc-700">
-//       <TransitionPanel
-//         activeIndex={activeIndex}
-//         variants={{
-//           enter: (direction) => ({
-//             x: direction > 0 ? 364 : -364,
-//             opacity: 0,
-//             height: bounds.height > 0 ? bounds.height : "auto",
-//             position: "initial",
-//           }),
-//           center: {
-//             zIndex: 1,
-//             x: 0,
-//             opacity: 1,
-//             height: bounds.height > 0 ? bounds.height : "auto",
-//           },
-//           exit: (direction) => ({
-//             zIndex: 0,
-//             x: direction < 0 ? 364 : -364,
-//             opacity: 0,
-//             position: "absolute",
-//             top: 0,
-//             width: "100%",
-//           }),
-//         }}
-//         transition={{
-//           x: { type: "spring", stiffness: 300, damping: 30 },
-//           opacity: { duration: 0.2 },
-//         }}
-//         custom={direction}
-//       >
-//         {FEATURES.map((feature, index) => (
-//           <div key={index} className="px-4 pt-4" ref={ref}>
-//             <h3 className="mb-2 font-medium text-zinc-800 dark:text-zinc-100">
-//               {feature.title}
-//             </h3>
-//             {feature.component}
-//           </div>
-//         ))}
-//       </TransitionPanel>
-//       <div className="flex justify-between p-4">
-//         {activeIndex > 0 ? (
-//           <Button onClick={() => handleSetActiveIndex(activeIndex - 1)}>
-//             Previous
-//           </Button>
-//         ) : (
-//           <div />
-//         )}
-//         <Button onClick={handleNext}>
-//           {activeIndex === FEATURES.length - 1 ? "Extract" : "Next"}
-//         </Button>
-//       </div>
-//     </div>
-//   );
-// }
-
 "use client";
 
 import type React from "react";
@@ -260,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { PlusCircle, ExternalLink, Info } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 function Button({
   onClick,
@@ -275,7 +30,7 @@ function Button({
       onClick={onClick}
       type="button"
       disabled={disabled}
-      className="relative flex h-8 shrink-0 scale-100 select-none appearance-none items-center justify-center rounded-lg border border-zinc-950/10 bg-transparent px-2 text-sm text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-2 active:scale-[0.98] dark:border-zinc-50/10 dark:text-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="relative flex h-8 shrink-0 scale-100 select-none appearance-none items-center justify-center rounded-lg bg-zinc-800/50 px-4 text-sm text-zinc-300 transition-all hover:bg-zinc-700/50 hover:text-zinc-100 focus-visible:ring-2 focus-visible:ring-violet-500/50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
     >
       {children}
     </button>
@@ -286,6 +41,7 @@ export default function TransitionPanelCard() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [ref, bounds] = useMeasure();
+  const [isHovered, setIsHovered] = useState(false);
 
   // Form state
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -479,72 +235,141 @@ export default function TransitionPanelCard() {
   };
 
   return (
-    <div className="w-[500px] overflow-hidden rounded-xl border border-zinc-950/10 bg-white dark:border-zinc-50/10 dark:bg-zinc-900">
-      <TransitionPanel
-        activeIndex={activeIndex}
-        variants={{
-          enter: (direction) => ({
-            x: direction > 0 ? 500 : -500,
-            opacity: 0,
-            height: bounds.height > 0 ? bounds.height : "auto",
-            position: "initial",
-          }),
-          center: {
-            zIndex: 1,
-            x: 0,
-            opacity: 1,
-            height: bounds.height > 0 ? bounds.height : "auto",
-          },
-          exit: (direction) => ({
-            zIndex: 0,
-            x: direction < 0 ? 500 : -500,
-            opacity: 0,
-            position: "absolute",
-            top: 0,
-            width: "100%",
-          }),
-        }}
-        transition={{
-          x: { type: "spring", stiffness: 300, damping: 30 },
-          opacity: { duration: 0.2 },
-        }}
-        custom={direction}
+    <div>
+      <div
+        className="relative w-full max-w-[500px]"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        {STEPS.map((step, index) => (
-          <div
-            key={index}
-            className="px-6 pt-6 pb-4"
-            ref={index === activeIndex ? ref : undefined}
-          >
-            <h3 className="mb-4 text-xl font-medium text-zinc-800 dark:text-zinc-100">
-              {step.title}
-            </h3>
-            {step.component}
-          </div>
-        ))}
-      </TransitionPanel>
-      <div className="flex justify-between p-4 border-t dark:border-zinc-700">
-        {activeIndex > 0 ? (
-          <Button onClick={() => handleSetActiveIndex(activeIndex - 1)}>
-            Previous
-          </Button>
-        ) : (
-          <div />
-        )}
-        <Button
-          onClick={() =>
-            activeIndex === STEPS.length - 1
-              ? null
-              : handleSetActiveIndex(activeIndex + 1)
-          }
-          disabled={isNextDisabled()}
+        {/* Expansive outer glow */}
+        <div
+          className="absolute -inset-12 transition-all duration-1000 ease-in-out"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05) 30%, rgba(139, 92, 246, 0.02) 60%, transparent 80%)",
+            opacity: isHovered ? 0.8 : 0,
+            filter: "blur(10px)",
+          }}
+        />
+
+        {/* Middle layer glow */}
+        <div
+          className="absolute -inset-6 transition-all duration-900 ease-in-out"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1) 40%, rgba(139, 92, 246, 0.03) 70%, transparent)",
+            opacity: isHovered ? 0.9 : 0.2,
+            filter: "blur(8px)",
+            transform: isHovered ? "scale(1.1)" : "scale(1)",
+          }}
+        />
+
+        {/* Inner glow */}
+        <div
+          className="absolute -inset-3 rounded-3xl transition-all duration-800 ease-in-out"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.15) 30%, rgba(139, 92, 246, 0.05) 60%, transparent 80%)",
+            opacity: isHovered ? 1 : 0.3,
+            filter: "blur(5px)",
+          }}
+        />
+
+        {/* Card */}
+        <motion.div
+          className="relative overflow-hidden rounded-2xl bg-black backdrop-blur-sm"
+          animate={{
+            rotateY: isHovered ? 2 : 0,
+            rotateX: isHovered ? -2 : 0,
+            scale: isHovered ? 1.02 : 1,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 25,
+            duration: 0.8,
+          }}
         >
-          {activeIndex === STEPS.length - 1
-            ? "Close"
-            : activeIndex === 3
-            ? "Extract"
-            : "Next"}
-        </Button>
+          <TransitionPanel
+            activeIndex={activeIndex}
+            variants={{
+              enter: (direction) => ({
+                x: direction > 0 ? 500 : -500,
+                opacity: 0,
+                height: bounds.height > 0 ? bounds.height : "auto",
+                position: "initial",
+              }),
+              center: {
+                zIndex: 1,
+                x: 0,
+                opacity: 1,
+                height: bounds.height > 0 ? bounds.height : "auto",
+              },
+              exit: (direction) => ({
+                zIndex: 0,
+                x: direction < 0 ? 500 : -500,
+                opacity: 0,
+                position: "absolute",
+                top: 0,
+                width: "100%",
+              }),
+            }}
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 },
+            }}
+            custom={direction}
+          >
+            {STEPS.map((step, index) => (
+              <div
+                key={index}
+                className="px-6 pt-6 pb-4"
+                ref={index === activeIndex ? ref : undefined}
+              >
+                <h3 className="mb-4 text-xl font-medium text-zinc-100">
+                  {step.title}
+                </h3>
+                {step.component}
+              </div>
+            ))}
+          </TransitionPanel>
+
+          <div className="flex justify-between p-4 bg-black/20 backdrop-blur-sm">
+            {activeIndex > 0 ? (
+              <Button onClick={() => handleSetActiveIndex(activeIndex - 1)}>
+                Previous
+              </Button>
+            ) : (
+              <div />
+            )}
+            <Button
+              onClick={() =>
+                activeIndex === STEPS.length - 1
+                  ? null
+                  : handleSetActiveIndex(activeIndex + 1)
+              }
+              disabled={isNextDisabled()}
+            >
+              {activeIndex === STEPS.length - 1
+                ? "Close"
+                : activeIndex === 3
+                ? "Extract"
+                : "Next"}
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Bottom shadow */}
+        <div
+          className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-[90%] h-16 transition-all duration-1000 ease-in-out"
+          style={{
+            background:
+              "radial-gradient(ellipse, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.05) 50%, transparent 80%)",
+            opacity: isHovered ? 0.9 : 0.3,
+            width: isHovered ? "110%" : "90%",
+            filter: "blur(12px)",
+          }}
+        />
       </div>
     </div>
   );

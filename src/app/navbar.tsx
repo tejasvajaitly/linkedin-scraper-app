@@ -1,8 +1,14 @@
 "use client";
 
-import { SignedIn, UserButton } from "@clerk/nextjs";
+import {
+  SignedIn,
+  SignInButton,
+  SignUpButton,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
 
-export default function Navbar({ isScrolled }) {
+export default function Navbar({ isScrolled }: { isScrolled: boolean }) {
   return (
     <div className="fixed top-8 z-50 w-full">
       <div className="mx-auto w-full max-w-screen-lg px-4">
@@ -35,6 +41,10 @@ export default function Navbar({ isScrolled }) {
               </svg>
             </a>
             <div className="flex gap-x-6 pr-6 sm:gap-x-12">
+              <SignedOut>
+                <SignInButton />
+                <SignUpButton />
+              </SignedOut>
               <SignedIn>
                 <UserButton />
               </SignedIn>
