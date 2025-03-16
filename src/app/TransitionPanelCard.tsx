@@ -15,6 +15,7 @@ import {
 import { PlusCircle, ExternalLink, Info } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useMutation } from "@tanstack/react-query";
 
 function Button({
   onClick,
@@ -37,6 +38,14 @@ function Button({
   );
 }
 
+// Add this interface for typing
+interface ScrapingResult {
+  results: {
+    profile: string;
+    currentCompany: string;
+  }[];
+}
+
 export default function TransitionPanelCard() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -55,6 +64,35 @@ export default function TransitionPanelCard() {
   const remainingFields = availableFields.filter(
     (field) => !selectedFields.includes(field)
   );
+
+  const scrapeMutation = useMutation<ScrapingResult>({
+    mutationFn: async () => {
+      const response = await fetch("http://localhost:3000/scrape", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: linkedinUrl,
+          fields: selectedFields,
+          cookies: [
+            {
+              name: "li_at",
+              value: authCookie,
+              domain: ".linkedin.com",
+              path: "/",
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to extract data");
+      }
+
+      return response.json();
+    },
+  });
 
   // Define the steps for the LinkedIn scraper
   const STEPS = [
@@ -196,13 +234,75 @@ export default function TransitionPanelCard() {
       component: (
         <div className="space-y-4">
           <p className="text-zinc-600 dark:text-zinc-400">
-            Your LinkedIn data extraction is complete. Here are the results.
+            {scrapeMutation.isPending
+              ? "Extracting data from LinkedIn..."
+              : scrapeMutation.isSuccess
+              ? "Your LinkedIn data extraction is complete. Here are the results."
+              : "Ready to extract data from LinkedIn."}
           </p>
 
           <div className="rounded-md border p-4 dark:border-zinc-700">
-            <p className="text-center text-zinc-500 dark:text-zinc-400">
-              Extracted data will appear here
-            </p>
+            {scrapeMutation.isPending && (
+              <div className="flex flex-col items-center justify-center space-y-3">
+                <div className="flex space-x-2">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-violet-500"></div>
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-violet-500 delay-150"></div>
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-violet-500 delay-300"></div>
+                </div>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Extracting profiles...
+                </span>
+              </div>
+            )}
+
+            {scrapeMutation.isError && (
+              <div className="text-center text-red-500">
+                <p>
+                  Error:{" "}
+                  {scrapeMutation.error?.message ||
+                    "An error occurred during extraction"}
+                </p>
+              </div>
+            )}
+
+            {scrapeMutation.isSuccess && scrapeMutation.data && (
+              <div className="space-y-4">
+                <div className="grid gap-3">
+                  {scrapeMutation.data.results.map((result, index) => (
+                    <div
+                      key={index}
+                      className="rounded-lg bg-zinc-900 p-3 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <a
+                          href={result.profile}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                        >
+                          View Profile
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <span className="text-sm text-zinc-400">
+                          {result.currentCompany}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 text-center text-sm text-zinc-500">
+                  Found {scrapeMutation.data.results.length} profiles
+                </div>
+              </div>
+            )}
+
+            {!scrapeMutation.isPending &&
+              !scrapeMutation.isSuccess &&
+              !scrapeMutation.isError && (
+                <p className="text-center text-zinc-500 dark:text-zinc-400">
+                  Click "Extract" to begin the data extraction process
+                </p>
+              )}
           </div>
         </div>
       ),
@@ -231,6 +331,17 @@ export default function TransitionPanelCard() {
         return !authCookie;
       default:
         return false;
+    }
+  };
+
+  const handleNext = () => {
+    if (activeIndex === 3) {
+      // On the authentication step
+      scrapeMutation.mutate();
+    }
+
+    if (activeIndex < STEPS.length - 1) {
+      handleSetActiveIndex(activeIndex + 1);
     }
   };
 
@@ -342,14 +453,7 @@ export default function TransitionPanelCard() {
             ) : (
               <div />
             )}
-            <Button
-              onClick={() =>
-                activeIndex === STEPS.length - 1
-                  ? null
-                  : handleSetActiveIndex(activeIndex + 1)
-              }
-              disabled={isNextDisabled()}
-            >
+            <Button onClick={handleNext} disabled={isNextDisabled()}>
               {activeIndex === STEPS.length - 1
                 ? "Close"
                 : activeIndex === 3
