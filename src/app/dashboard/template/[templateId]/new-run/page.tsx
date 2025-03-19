@@ -3,7 +3,7 @@
 import { useState, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Play, Cookie, HelpCircle } from "lucide-react";
+import { Play, Cookie, HelpCircle, Info, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 export default function NewRunPage({
   params,
@@ -125,55 +126,68 @@ export default function NewRunPage({
             </p>
           </div>
 
-          <div className="flex items-start gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <HelpCircle className="w-4 h-4 mr-2" />
-                  How to get cookies?
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>How to get LinkedIn cookies</DialogTitle>
-                  <DialogDescription>
-                    Follow these steps to get your LinkedIn authentication
-                    cookies
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="aspect-video">
-                  <video
-                    controls
-                    className="w-full rounded-lg"
-                    src="/cookie-guide.mp4" // Add your video path here
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">LinkedIn Cookie</label>
-              <Textarea
-                placeholder="Paste your LinkedIn cookie here..."
-                value={cookie}
-                onChange={(e) => setCookie(e.target.value)}
-                className="min-h-[100px] font-mono text-sm"
-              />
+            <div className="rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Info className="h-5 w-5 text-blue-400" aria-hidden="true" />
+                </div>
+                <div className="ml-3 flex-1 md:flex md:justify-between">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Watch our tutorial to learn how to get your LinkedIn cookie.
+                  </p>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-3 md:mt-0 text-sm font-medium text-blue-700 hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-200"
+                      >
+                        <span>Watch tutorial</span>
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-[800px] w-full">
+                      <DialogHeader>
+                        <DialogTitle>How to get LinkedIn cookies</DialogTitle>
+                        <DialogDescription>
+                          Follow these steps to get your LinkedIn authentication
+                          cookies
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div
+                        className="relative w-full"
+                        style={{ paddingBottom: "56.25%" }}
+                      >
+                        <iframe
+                          className="absolute top-0 left-0 w-full h-full rounded-lg"
+                          src="https://player.vimeo.com/video/1067238912?h=b90ad44755"
+                          allow="autoplay; fullscreen"
+                          allowFullScreen
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
             </div>
 
-            <Button
-              className="w-full"
-              disabled={!cookie.trim()}
-              onClick={() => setIsReady(true)}
-            >
-              <Cookie className="w-4 h-4 mr-2" />
-              Use Cookie & Start Extraction
-            </Button>
+            <Input
+              placeholder="Paste your LinkedIn auth cookie here"
+              value={cookie}
+              onChange={(e) => setCookie(e.target.value)}
+              className="w-full font-mono text-xs"
+            />
           </div>
+
+          <Button
+            className="w-full"
+            disabled={!cookie.trim()}
+            onClick={() => setIsReady(true)}
+          >
+            <Cookie className="w-4 h-4 mr-2" />
+            Use Cookie & Start Extraction
+          </Button>
         </div>
       ) : (
         template && (

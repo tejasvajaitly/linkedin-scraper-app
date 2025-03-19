@@ -18,6 +18,29 @@ import ScrapeStepper from "./scrape-stepper";
 import { useSession, useUser } from "@clerk/nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { HelpCircle } from "lucide-react";
+
+// Add this validation function at the top level
+const isValidLinkedInSearchUrl = (url: string) => {
+  try {
+    const urlObj = new URL(url);
+    return (
+      urlObj.hostname === "www.linkedin.com" &&
+      urlObj.pathname === "/search/results/people/" &&
+      urlObj.searchParams.has("keywords")
+    );
+  } catch {
+    return false;
+  }
+};
 
 export default function TransitionPanelCard() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -82,7 +105,7 @@ export default function TransitionPanelCard() {
       case 0: // Name step
         return !name.trim();
       case 1: // LinkedIn URL step
-        return !linkedinUrl.trim();
+        return !linkedinUrl.trim() || !isValidLinkedInSearchUrl(linkedinUrl);
       case 2: // Fields step
         return selectedFields.length === 0;
       case 3: // Cookie step
@@ -218,17 +241,32 @@ function Url({
   linkedinUrl: string;
   setLinkedinUrl: (value: string) => void;
 }) {
+  const isValidUrl =
+    !linkedinUrl.trim() || isValidLinkedInSearchUrl(linkedinUrl);
+
   return (
     <div className="space-y-4 p-4">
       <p className="text-zinc-600 dark:text-zinc-400">
-        Enter the LinkedIn profile URL you want to extract data from.
+        Enter the LinkedIn search URL you want to extract data from.
       </p>
-      <Input
-        placeholder="https://www.linkedin.com/in/username"
-        value={linkedinUrl}
-        onChange={(e) => setLinkedinUrl(e.target.value)}
-        className="w-full"
-      />
+      <div className="space-y-2">
+        <Input
+          placeholder="https://www.linkedin.com/search/results/people/?keywords=..."
+          value={linkedinUrl}
+          onChange={(e) => setLinkedinUrl(e.target.value)}
+          className={`w-full ${!isValidUrl ? "border-red-500" : ""}`}
+        />
+        {!isValidUrl && (
+          <p className="text-sm text-red-500">
+            Please enter a valid LinkedIn search URL (e.g.,
+            https://www.linkedin.com/search/results/people/?keywords=...)
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Only LinkedIn people search URLs are supported (e.g.,
+          /search/results/people/)
+        </p>
+      </div>
     </div>
   );
 }
@@ -323,15 +361,38 @@ function Cookie({
             <p className="text-sm text-blue-700 dark:text-blue-300">
               Watch our tutorial to learn how to get your LinkedIn cookie.
             </p>
-            <p className="mt-3 text-sm md:ml-6 md:mt-0">
-              <Link
-                href="#"
-                className="whitespace-nowrap font-medium text-blue-700 hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-200 flex items-center gap-1"
-              >
-                <span>Watch tutorial</span>
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </p>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 md:mt-0 text-sm font-medium text-blue-700 hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-200"
+                >
+                  <span>Watch tutorial</span>
+                  <ExternalLink className="h-3 w-3 ml-1" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-[800px] w-full">
+                <DialogHeader>
+                  <DialogTitle>How to get LinkedIn cookies</DialogTitle>
+                  <DialogDescription>
+                    Follow these steps to get your LinkedIn authentication
+                    cookies
+                  </DialogDescription>
+                </DialogHeader>
+                <div
+                  className="relative w-full"
+                  style={{ paddingBottom: "56.25%" }}
+                >
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full rounded-lg"
+                    src="https://player.vimeo.com/video/1067238912?h=b90ad44755"
+                    allow="autoplay; fullscreen"
+                    allowFullScreen
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
