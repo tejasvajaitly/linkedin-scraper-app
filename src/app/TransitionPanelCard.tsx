@@ -18,7 +18,6 @@ import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { useSession, useUser } from "@clerk/nextjs";
 import { createClient } from "@supabase/supabase-js";
-import { data } from "./data";
 import { Button } from "@/components/ui/button";
 
 // Add this interface for typing
