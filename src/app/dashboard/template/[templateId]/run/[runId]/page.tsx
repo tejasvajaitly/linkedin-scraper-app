@@ -23,11 +23,7 @@ import { Button } from "@/components/ui/button";
 import { ExportButtons } from "./export-buttons";
 import { RerunButton } from "./rerun-button";
 
-export default async function Page({
-  params,
-}: {
-  params: { runId: string; templateId: string };
-}) {
+export default async function Page({ params }: { params: { runId: string } }) {
   const { runId } = await params;
   const client = await createClerkSupabaseClientSsr();
   const { data: run } = await client
