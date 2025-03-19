@@ -42,65 +42,64 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
     : "?";
 
   return (
-    <Card className="w-full max-w-md overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 bg-card text-card-foreground">
-      <CardContent className="p-6">
-        <div className="flex items-start gap-4">
-          <Avatar className="h-16 w-16 border border-border">
-            {data.profilePhotoUrl ? (
-              <AvatarImage
-                src={data.profilePhotoUrl}
-                alt={data.name || "Profile"}
-              />
-            ) : null}
-            <AvatarFallback className="bg-muted text-muted-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+    <Card className="py-2 w-full overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 bg-card text-card-foreground">
+      <CardContent className="p-2">
+        <div className="flex flex-row justify-between gap-2">
+          <div className="flex flex-row justify-start gap-2">
+            <Avatar className="h-8 w-8 border border-border">
+              {data.profilePhotoUrl ? (
+                <AvatarImage
+                  src={data.profilePhotoUrl}
+                  alt={data.name || "Profile"}
+                />
+              ) : null}
+              <AvatarFallback className="bg-muted text-muted-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
 
-          <div className="space-y-1.5">
-            {data.name && (
-              <h3 className="font-semibold text-lg leading-none">
-                {data.name}
-              </h3>
-            )}
-            {data.headline && (
-              <p className="text-sm text-muted-foreground">{data.headline}</p>
-            )}
-
-            <div className="flex flex-col gap-1.5 mt-3">
-              {data.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{data.location}</span>
-                </div>
+            <div className="space-y-1.5">
+              {data.name && (
+                <h3 className="font-semibold text-sm leading-none">
+                  {data.name}
+                </h3>
+              )}
+              {data.headline && (
+                <p className="text-sm text-muted-foreground">{data.headline}</p>
               )}
 
-              {data.currentCompany && (
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{data.currentCompany}</span>
-                </div>
-              )}
+              <div className="flex flex-row gap-1.5 mt-3">
+                {data.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{data.location}</span>
+                  </div>
+                )}
+
+                {data.currentCompany && (
+                  <div className="flex items-center gap-2">
+                    <p>|</p>
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{data.currentCompany}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+          {data.profileUrl && (
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href={data.profileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          )}
         </div>
       </CardContent>
-
-      {data.profileUrl && (
-        <CardFooter className="px-6 py-3 flex justify-end">
-          <Button variant="outline" size="sm" asChild>
-            <Link
-              href={data.profileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5"
-            >
-              <span>View Profile</span>
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
-        </CardFooter>
-      )}
     </Card>
   );
 }

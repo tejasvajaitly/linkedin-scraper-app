@@ -7,6 +7,8 @@ import {
   SignedOut,
   UserButton,
 } from "@clerk/nextjs";
+import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
 
 export default function Navbar({
   children,
@@ -24,7 +26,7 @@ export default function Navbar({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div className="h-full">
       <div className="fixed top-8 z-50 w-full">
         <div className="mx-auto w-full max-w-screen-lg px-4">
           <div
@@ -55,14 +57,21 @@ export default function Navbar({
                   ></path>
                 </svg>
               </a>
-              <div className="flex gap-x-6 pr-6 sm:gap-x-12">
+              <div className="flex items-center gap-x-6 pr-6 sm:gap-x-12">
+                <SignedIn>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2 text-sm font-medium text-white hover:text-neutral-300 transition-colors"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                  <UserButton />
+                </SignedIn>
                 <SignedOut>
                   <SignInButton />
                   <SignUpButton />
                 </SignedOut>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
               </div>
             </div>
           </div>

@@ -17,6 +17,7 @@ import { PlusCircle, ExternalLink, Info, CircleMinus } from "lucide-react";
 import ScrapeStepper from "./scrape-stepper";
 import { useSession, useUser } from "@clerk/nextjs";
 import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 export default function TransitionPanelCard() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -34,6 +35,7 @@ export default function TransitionPanelCard() {
 
   const { user } = useUser();
   const { session } = useSession();
+  const router = useRouter();
 
   function createClerkSupabaseClient() {
     return createClient(
@@ -75,8 +77,7 @@ export default function TransitionPanelCard() {
   };
 
   // This function is triggered when the user clicks the "Extract" button.
-  const handleExtract = () => {
-    // Here you could validate the input fields.
+  const handleExtract = async () => {
     setIsExtracting(true);
   };
 
@@ -85,6 +86,8 @@ export default function TransitionPanelCard() {
       <ScrapeStepper
         url={linkedinUrl}
         fields={selectedFields}
+        client={client}
+        templateName={name}
         cookies={[
           {
             name: "li_at",
@@ -93,79 +96,80 @@ export default function TransitionPanelCard() {
             path: "/",
           },
         ]}
-        onComplete={handleExtractionComplete}
       />
     );
   }
 
   return (
-    <Glow>
-      <div className="relative overflow-hidden rounded-2xl bg-black backdrop-blur-sm">
-        <TransitionPanel
-          activeIndex={activeIndex}
-          variants={{
-            enter: (direction) => ({
-              x: direction > 0 ? 364 : -364,
-              opacity: 0,
-              height: bounds.height > 0 ? bounds.height : "auto",
-              position: "initial",
-            }),
-            center: {
-              zIndex: 1,
-              x: 0,
-              opacity: 1,
-              height: bounds.height > 0 ? bounds.height : "auto",
-            },
-            exit: (direction) => ({
-              zIndex: 0,
-              x: direction < 0 ? 364 : -364,
-              opacity: 0,
-              position: "absolute",
-              top: 0,
-              width: "100%",
-            }),
-          }}
-          transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 },
-          }}
-          custom={direction}
-        >
-          <Name name={name} setName={setName} />
-          <Url linkedinUrl={linkedinUrl} setLinkedinUrl={setLinkedinUrl} />
-          <Fields
-            selectedFields={selectedFields}
-            setSelectedFields={setSelectedFields}
-          />
-          <Cookie cookie={cookie} setCookie={setCookie} />
-        </TransitionPanel>
-        <div className="flex justify-between p-4">
-          {activeIndex > 0 ? (
-            <Button
-              className="cursor-pointer my-2"
-              variant="secondary"
-              onClick={() => handleSetActiveIndex(activeIndex - 1)}
-            >
-              Previous
-            </Button>
-          ) : (
-            <div />
-          )}
-          {activeIndex === 3 ? (
-            <Button className="cursor-pointer my-2" onClick={handleExtract}>
-              Extract
-            </Button>
-          ) : (
-            <Button
-              className="cursor-pointer my-2"
-              onClick={() => handleSetActiveIndex(activeIndex + 1)}
-            >
-              Next
-            </Button>
-          )}
+    <div className="h-full flex justify-center items-center">
+      <Glow>
+        <div className="relative overflow-hidden rounded-2xl bg-black backdrop-blur-sm">
+          <TransitionPanel
+            activeIndex={activeIndex}
+            variants={{
+              enter: (direction) => ({
+                x: direction > 0 ? 364 : -364,
+                opacity: 0,
+                height: bounds.height > 0 ? bounds.height : "auto",
+                position: "initial",
+              }),
+              center: {
+                zIndex: 1,
+                x: 0,
+                opacity: 1,
+                height: bounds.height > 0 ? bounds.height : "auto",
+              },
+              exit: (direction) => ({
+                zIndex: 0,
+                x: direction < 0 ? 364 : -364,
+                opacity: 0,
+                position: "absolute",
+                top: 0,
+                width: "100%",
+              }),
+            }}
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 },
+            }}
+            custom={direction}
+          >
+            <Name name={name} setName={setName} />
+            <Url linkedinUrl={linkedinUrl} setLinkedinUrl={setLinkedinUrl} />
+            <Fields
+              selectedFields={selectedFields}
+              setSelectedFields={setSelectedFields}
+            />
+            <Cookie cookie={cookie} setCookie={setCookie} />
+          </TransitionPanel>
+          <div className="flex justify-between p-4">
+            {activeIndex > 0 ? (
+              <Button
+                className="cursor-pointer my-2"
+                variant="secondary"
+                onClick={() => handleSetActiveIndex(activeIndex - 1)}
+              >
+                Previous
+              </Button>
+            ) : (
+              <div />
+            )}
+            {activeIndex === 3 ? (
+              <Button className="cursor-pointer my-2" onClick={handleExtract}>
+                Continue
+              </Button>
+            ) : (
+              <Button
+                className="cursor-pointer my-2"
+                onClick={() => handleSetActiveIndex(activeIndex + 1)}
+              >
+                Next
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
-    </Glow>
+      </Glow>
+    </div>
   );
 }
 

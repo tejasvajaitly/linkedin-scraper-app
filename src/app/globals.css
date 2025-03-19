@@ -2,7 +2,15 @@
 
 @plugin "tailwindcss-animate";
 
+@plugin 'tailwind-scrollbar';
+
 @custom-variant dark (&:is(.dark *));
+
+html,
+body,
+:root {
+  height: 100%;
+}
 
 body {
   font-family: var(--font-geist-mono);

@@ -1,6 +1,6 @@
 "use client";
 
-import ProfileCard from "./profile-card";
+import ProfileCard from "@/app/dashboard/new-template/profile-card";
 import { useEffect, useState } from "react";
 import {
   Check,
@@ -47,20 +47,14 @@ const initialSteps: Step[] = [
 ];
 
 interface ScrapeStepperProps {
+  templateId: string;
   url: string;
   fields: string[];
   cookies: Array<{ name: string; value: string; domain: string; path: string }>;
   client: SupabaseClient<any, "public", any>;
-  templateName: string;
 }
 
-interface CreateTemplateResponse {
-  template: {
-    id: string;
-    name: string;
-    linkedin_url: string;
-    selected_fields: string[];
-  };
+interface CreateRunResponse {
   run: {
     id: string;
     template_id: string;
@@ -68,11 +62,11 @@ interface CreateTemplateResponse {
 }
 
 export default function ScrapeStepper({
+  templateId,
   url,
   fields,
   cookies,
   client,
-  templateName,
 }: ScrapeStepperProps) {
   const router = useRouter();
   const [steps, setSteps] = useState<Step[]>(initialSteps);
@@ -80,28 +74,13 @@ export default function ScrapeStepper({
   const [result, setResult] = useState<any>(null);
   const [isStarted, setIsStarted] = useState(false);
 
-  const createTemplateAndRun = useMutation({
-    mutationFn: async (): Promise<CreateTemplateResponse> => {
-      // Create template
-      const { data: template, error: templateError } = await client
-        .from("templates")
-        .insert({
-          name: templateName,
-          linkedin_url: url,
-          selected_fields: fields,
-        })
-        .select("*")
-        .single();
-
-      if (templateError || !template) {
-        throw templateError || new Error("Failed to create template");
-      }
-
-      // Create run
+  const createRun = useMutation({
+    mutationFn: async (): Promise<CreateRunResponse> => {
+      // Create only a new run for existing template
       const { data: run, error: runError } = await client
         .from("runs")
         .insert({
-          template_id: template.id,
+          template_id: templateId,
         })
         .select("*")
         .single();
@@ -110,7 +89,7 @@ export default function ScrapeStepper({
         throw runError || new Error("Failed to create run");
       }
 
-      return { template, run };
+      return { run };
     },
     onSuccess: (data) => {
       const eventSource = setupEventSource(data.run.id);
@@ -228,7 +207,7 @@ export default function ScrapeStepper({
   };
 
   const startScraping = () => {
-    createTemplateAndRun.mutate();
+    createRun.mutate();
   };
 
   // Update step by ID with new message and status.
@@ -260,10 +239,6 @@ export default function ScrapeStepper({
 
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              <span>Template Name: {templateName}</span>
-            </div>
-            <div className="flex items-center gap-2">
               <Tags className="w-4 h-4" />
               <span>Fields: {fields.join(", ")}</span>
             </div>
@@ -273,12 +248,12 @@ export default function ScrapeStepper({
             size="lg"
             className="px-8"
             onClick={startScraping}
-            disabled={createTemplateAndRun.isPending}
+            disabled={createRun.isPending}
           >
-            {createTemplateAndRun.isPending ? (
+            {createRun.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating Template...
+                Starting Extraction...
               </>
             ) : (
               <>
@@ -364,14 +339,11 @@ export default function ScrapeStepper({
                 <Button
                   className="w-full"
                   onClick={() =>
-                    router.push(
-                      `/dashboard/template/${createTemplateAndRun.data?.template.id}/new-run`
-                    )
+                    router.push(`/dashboard/template/${templateId}/new-run`)
                   }
-                  disabled={!createTemplateAndRun.data}
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Rerun with New Cookie
+                  Try Again with New Cookie
                 </Button>
               </div>
             </div>
@@ -381,13 +353,11 @@ export default function ScrapeStepper({
 
       {result && (
         <div className="space-y-6">
-          {/* Success Message */}
           <div className="flex items-center gap-2 text-green-600">
             <CheckCircle2 className="w-5 h-5" />
             <p className="font-medium">Extraction completed successfully!</p>
           </div>
 
-          {/* Navigation Card */}
           <div className="bg-muted/50 rounded-lg p-4 flex items-center justify-between">
             <div className="space-y-1">
               <p className="font-medium">View Complete Results</p>
@@ -398,7 +368,7 @@ export default function ScrapeStepper({
             </div>
             <Button asChild>
               <Link
-                href={`/dashboard/template/${createTemplateAndRun.data?.template.id}/run/${createTemplateAndRun.data?.run.id}`}
+                href={`/dashboard/template/${templateId}/run/${createRun.data?.run.id}`}
                 className="flex items-center"
               >
                 Go to Run Details
@@ -407,7 +377,6 @@ export default function ScrapeStepper({
             </Button>
           </div>
 
-          {/* Preview Results */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Preview Results</h3>

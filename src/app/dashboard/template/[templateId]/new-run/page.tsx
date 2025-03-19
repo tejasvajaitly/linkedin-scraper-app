@@ -1,145 +1,186 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { TransitionPanel } from "@/components/ui/transition-panel";
-import useMeasure from "react-use-measure";
 
-function Button({
-  onClick,
-  children,
+import { useState, use } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Play, Cookie, HelpCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import ScrapeStepper from "./scrape-stepper";
+import { useSession } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+
+export default function NewRunPage({
+  params,
 }: {
-  onClick: () => void;
-  children: React.ReactNode;
+  params: Promise<{ templateId: string }>;
 }) {
-  return (
-    <button
-      onClick={onClick}
-      type="button"
-      className="relative flex h-8 shrink-0 scale-100 select-none appearance-none items-center justify-center rounded-lg border border-zinc-950/10 bg-transparent px-2 text-sm text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-2 active:scale-[0.98] dark:border-zinc-50/10 dark:text-zinc-50 dark:hover:bg-zinc-800"
-    >
-      {children}
-    </button>
-  );
-}
-export function TransitionPanelCard() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const [ref, bounds] = useMeasure();
+  const [cookie, setCookie] = useState("");
+  const [isReady, setIsReady] = useState(false);
+  const resolvedParams = use(params); // Resolve the async params
 
-  const FEATURES = [
-    {
-      title: "Brand",
-      description:
-        "Develop a distinctive brand identity with tailored logos and guidelines to ensure consistent messaging across all platforms.",
-    },
-    {
-      title: "Product",
-      description:
-        "Design and refine products that excel in user experience, meeting needs effectively and creating memorable interactions. We specialize in web applications.",
-    },
-    {
-      title: "Website",
-      description:
-        "Create impactful websites that combine beautiful aesthetics with functional design, ensuring a superior online presence.",
-    },
-    {
-      title: "Design System",
-      description:
-        "Develop a design system that unifies your brand identity, ensuring consistency across all platforms and products.",
-    },
-  ];
+  const { user } = useUser();
+  const { session } = useSession();
+  const router = useRouter();
 
-  const handleSetActiveIndex = (newIndex: number) => {
-    setDirection(newIndex > activeIndex ? 1 : -1);
-    setActiveIndex(newIndex);
-  };
+  function createClerkSupabaseClient() {
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_KEY!,
+      {
+        global: {
+          // Get the custom Supabase token from Clerk
+          fetch: async (url, options = {}) => {
+            const clerkToken = await session?.getToken({
+              template: "supabase",
+            });
 
-  useEffect(() => {
-    if (activeIndex < 0) setActiveIndex(0);
-    if (activeIndex >= FEATURES.length) setActiveIndex(FEATURES.length - 1);
-  }, [activeIndex]);
+            // Insert the Clerk Supabase token into the headers
+            const headers = new Headers(options?.headers);
+            headers.set("Authorization", `Bearer ${clerkToken}`);
 
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 364 : -364,
-      opacity: 0,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 364 : -364,
-      opacity: 0,
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-    }),
-  };
-
-  return (
-    <div className="w-[364px] overflow-hidden rounded-xl border border-zinc-950/10 bg-white dark:bg-zinc-700">
-      <TransitionPanel
-        activeIndex={activeIndex}
-        variants={{
-          enter: (direction) => ({
-            x: direction > 0 ? 364 : -364,
-            opacity: 0,
-            height: bounds.height > 0 ? bounds.height : "auto",
-            position: "initial",
-          }),
-          center: {
-            zIndex: 1,
-            x: 0,
-            opacity: 1,
-            height: bounds.height > 0 ? bounds.height : "auto",
+            // Now call the default fetch
+            return fetch(url, {
+              ...options,
+              headers,
+            });
           },
-          exit: (direction) => ({
-            zIndex: 0,
-            x: direction < 0 ? 364 : -364,
-            opacity: 0,
-            position: "absolute",
-            top: 0,
-            width: "100%",
-          }),
-        }}
-        transition={{
-          x: { type: "spring", stiffness: 300, damping: 30 },
-          opacity: { duration: 0.2 },
-        }}
-        custom={direction}
-      >
-        {FEATURES.map((feature, index) => (
-          <div key={index} className="px-4 pt-4" ref={ref}>
-            <h3 className="mb-0.5 font-medium text-zinc-800 dark:text-zinc-100">
-              {feature.title}
-            </h3>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {feature.description}
+        },
+      }
+    );
+  }
+
+  const client = createClerkSupabaseClient();
+
+  // Fetch template using React Query
+  const {
+    data: template,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["template", resolvedParams.templateId],
+    queryFn: async () => {
+      const { data, error } = await client
+        .from("templates")
+        .select()
+        .eq("id", resolvedParams.templateId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+          <p className="text-muted-foreground">Loading template...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-red-500">
+          Failed to load template. Please try again.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto p-6 space-y-8">
+      {!isReady ? (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold">New Extraction Run</h1>
+            <p className="text-muted-foreground">
+              To run a new extraction, we need fresh LinkedIn authentication
+              cookies.
             </p>
           </div>
-        ))}
-      </TransitionPanel>
-      <div className="flex justify-between p-4">
-        {activeIndex > 0 ? (
-          <Button onClick={() => handleSetActiveIndex(activeIndex - 1)}>
-            Previous
-          </Button>
-        ) : (
-          <div />
-        )}
-        <Button
-          onClick={() =>
-            activeIndex === FEATURES.length - 1
-              ? null
-              : handleSetActiveIndex(activeIndex + 1)
-          }
-        >
-          {activeIndex === FEATURES.length - 1 ? "Close" : "Next"}
-        </Button>
-      </div>
+
+          <div className="flex items-start gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <HelpCircle className="w-4 h-4 mr-2" />
+                  How to get cookies?
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>How to get LinkedIn cookies</DialogTitle>
+                  <DialogDescription>
+                    Follow these steps to get your LinkedIn authentication
+                    cookies
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="aspect-video">
+                  <video
+                    controls
+                    className="w-full rounded-lg"
+                    src="/cookie-guide.mp4" // Add your video path here
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">LinkedIn Cookie</label>
+              <Textarea
+                placeholder="Paste your LinkedIn cookie here..."
+                value={cookie}
+                onChange={(e) => setCookie(e.target.value)}
+                className="min-h-[100px] font-mono text-sm"
+              />
+            </div>
+
+            <Button
+              className="w-full"
+              disabled={!cookie.trim()}
+              onClick={() => setIsReady(true)}
+            >
+              <Cookie className="w-4 h-4 mr-2" />
+              Use Cookie & Start Extraction
+            </Button>
+          </div>
+        </div>
+      ) : (
+        template && (
+          <ScrapeStepper
+            url={template.linkedin_url}
+            fields={template.selected_fields}
+            cookies={[
+              {
+                name: "li_at",
+                value: cookie,
+                domain: ".linkedin.com",
+                path: "/",
+              },
+            ]}
+            client={client}
+            templateId={resolvedParams.templateId}
+          />
+        )
+      )}
     </div>
   );
 }
