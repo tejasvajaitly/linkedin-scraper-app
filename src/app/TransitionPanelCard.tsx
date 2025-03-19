@@ -373,7 +373,7 @@ export default function TransitionPanelCard() {
                   ))}
                 </div>
                 <div className="mt-4 text-center text-sm text-zinc-500">
-                  Found {scrapeMutation.data.results.length} profiles
+                  Found {scrapeMutation?.data?.results?.length} profiles
                 </div>
               </div>
             )}
@@ -403,20 +403,31 @@ export default function TransitionPanelCard() {
 
   const isNextDisabled = () => {
     switch (activeIndex) {
-      case 0:
-        return !linkedinUrl;
-      case 1:
-        return !templateName;
-      case 2:
+      case 0: // LinkedIn URL step
+        return !linkedinUrl.trim() || !linkedinUrl.includes("linkedin.com");
+
+      case 1: // Template Name step
+        return !templateName.trim();
+
+      case 2: // Select Fields step
         return selectedFields.length === 0;
-      case 3:
-        return !authCookie;
+
+      case 3: // LinkedIn Authentication step
+        return !authCookie.trim();
+
+      case 4: // Results step
+        return false; // Last step, no next button
+
       default:
         return false;
     }
   };
 
   const handleNext = async () => {
+    if (isNextDisabled()) {
+      return;
+    }
+
     // If we're on the authentication step (step 3)
     if (activeIndex === 3) {
       setIsCreatingTemplate(true);
@@ -435,7 +446,7 @@ export default function TransitionPanelCard() {
       } finally {
         setIsCreatingTemplate(false);
       }
-      return; // Exit the function after handling the extraction step
+      return;
     }
 
     // For all other steps, just navigate if not on the last step

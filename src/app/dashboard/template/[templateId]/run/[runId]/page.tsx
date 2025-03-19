@@ -135,7 +135,7 @@ export default async function Page({ params }: PageProps) {
 
       {/* Results Content */}
       <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 gap-4 p-4 mx-auto">
-        {run.result.map((result: any) => (
+        {run?.result?.map((result: any) => (
           <ProfileCard key={result.name} profile={result} />
         ))}
       </div>

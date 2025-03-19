@@ -37,7 +37,7 @@ export default function Navbar({
             }`}
           >
             <div className="flex w-full items-center justify-between p-2">
-              <a href="#" className="p-1">
+              <a href="/" className="p-1">
                 <span className="sr-only">Mole Logo</span>
                 <Image src="/mole.svg" alt="Mole Logo" width={32} height={32} />
               </a>

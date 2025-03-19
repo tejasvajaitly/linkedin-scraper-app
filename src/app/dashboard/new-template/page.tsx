@@ -77,6 +77,21 @@ export default function TransitionPanelCard() {
     setIsExtracting(true);
   };
 
+  const isNextDisabled = () => {
+    switch (activeIndex) {
+      case 0: // Name step
+        return !name.trim();
+      case 1: // LinkedIn URL step
+        return !linkedinUrl.trim();
+      case 2: // Fields step
+        return selectedFields.length === 0;
+      case 3: // Cookie step
+        return !cookie.trim();
+      default:
+        return false;
+    }
+  };
+
   if (isExtracting) {
     return (
       <ScrapeStepper
@@ -151,13 +166,18 @@ export default function TransitionPanelCard() {
               <div />
             )}
             {activeIndex === 3 ? (
-              <Button className="cursor-pointer my-2" onClick={handleExtract}>
+              <Button
+                className="cursor-pointer my-2"
+                onClick={handleExtract}
+                disabled={!cookie.trim()}
+              >
                 Continue
               </Button>
             ) : (
               <Button
                 className="cursor-pointer my-2"
                 onClick={() => handleSetActiveIndex(activeIndex + 1)}
+                disabled={isNextDisabled()}
               >
                 Next
               </Button>

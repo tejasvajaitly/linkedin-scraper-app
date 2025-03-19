@@ -381,11 +381,11 @@ export default function ScrapeStepper({
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Preview Results</h3>
               <p className="text-sm text-muted-foreground">
-                Showing {result.results.length} profiles
+                Showing {result?.results?.length} profiles
               </p>
             </div>
             <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-1">
-              {result.results.map((profile: any, index: number) => (
+              {result?.results?.map((profile: any, index: number) => (
                 <ProfileCard key={index} profile={profile} />
               ))}
             </div>
