@@ -12,31 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, ExternalLink, Info } from "lucide-react";
+import { PlusCircle, ExternalLink, Info, CircleMinus } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
-
-function Button({
-  onClick,
-  children,
-  disabled = false,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      type="button"
-      disabled={disabled}
-      className="relative flex h-8 shrink-0 scale-100 select-none appearance-none items-center justify-center rounded-lg bg-zinc-800/50 px-4 text-sm text-zinc-300 transition-all hover:bg-zinc-700/50 hover:text-zinc-100 focus-visible:ring-2 focus-visible:ring-violet-500/50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
-    >
-      {children}
-    </button>
-  );
-}
+import { useSession, useUser } from "@clerk/nextjs";
+import { createClient } from "@supabase/supabase-js";
+import { data } from "./data";
+import { Button } from "@/components/ui/button";
 
 // Add this interface for typing
 interface ScrapingResult {
@@ -58,8 +41,79 @@ export default function TransitionPanelCard() {
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [authCookie, setAuthCookie] = useState("");
   const [currentField, setCurrentField] = useState("");
+  const [templateId, setTemplateId] = useState<string | null>(null);
+  const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
 
   const availableFields = ["url", "name", "company", "location", "headline"];
+
+  // The `useUser()` hook will be used to ensure that Clerk has loaded data about the logged in user
+  const { user } = useUser();
+  // The `useSession()` hook will be used to get the Clerk session object
+  const { session } = useSession();
+
+  function createClerkSupabaseClient() {
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_KEY!,
+      {
+        global: {
+          // Get the custom Supabase token from Clerk
+          fetch: async (url, options = {}) => {
+            const clerkToken = await session?.getToken({
+              template: "supabase",
+            });
+
+            // Insert the Clerk Supabase token into the headers
+            const headers = new Headers(options?.headers);
+            headers.set("Authorization", `Bearer ${clerkToken}`);
+
+            // Now call the default fetch
+            return fetch(url, {
+              ...options,
+              headers,
+            });
+          },
+        },
+      }
+    );
+  }
+
+  const client = createClerkSupabaseClient();
+
+  async function createTemplateAndRun() {
+    try {
+      // First create the template and get its ID
+      const { data: template, error: templateError } = await client
+        .from("templates")
+        .insert({
+          name: templateName,
+          linkedin_url: linkedinUrl,
+          selected_fields: selectedFields,
+        })
+        .select("id")
+        .single();
+
+      if (templateError || !template) {
+        throw templateError || new Error("Failed to create template");
+      }
+
+      // Then create a run with the template_id
+      const { error: runError } = await client.from("runs").insert({
+        template_id: template.id,
+        // status will default to 'pending' in the database
+      });
+
+      if (runError) {
+        throw runError;
+      }
+
+      return template.id; // Return template ID for future reference
+    } catch (error) {
+      console.error("Error creating template and run:", error);
+      throw error;
+    }
+  }
 
   const remainingFields = availableFields.filter(
     (field) => !selectedFields.includes(field)
@@ -67,30 +121,70 @@ export default function TransitionPanelCard() {
 
   const scrapeMutation = useMutation<ScrapingResult>({
     mutationFn: async () => {
-      const response = await fetch("http://localhost:3000/scrape", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: linkedinUrl,
-          fields: selectedFields,
-          cookies: [
-            {
-              name: "li_at",
-              value: authCookie,
-              domain: ".linkedin.com",
-              path: "/",
-            },
-          ],
-        }),
-      });
+      try {
+        // Simulate API call with mock data
+        // const res = await new Promise<ScrapingResult>((resolve, reject) => {
+        //   setTimeout(() => {
+        //     // Simulate 90% success rate
+        //     if (Math.random() > 0.1) {
+        //       resolve(data);
+        //     } else {
+        //       reject(new Error("Failed to extract data"));
+        //     }
+        //   }, 2000);
+        // });
 
-      if (!response.ok) {
-        throw new Error("Failed to extract data");
+        const res = fetch("https://api.tejasvajaitly.com/scrape", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            url: linkedinUrl,
+            fields: selectedFields,
+            cookies: [
+              {
+                name: "li_at",
+                value: authCookie,
+                domain: ".linkedin.com",
+                path: "/",
+              },
+            ],
+          }),
+        });
+
+        // Update run status to success
+        if (templateId) {
+          await client
+            .from("runs")
+            .update({
+              status: "success",
+            })
+            .eq("template_id", templateId);
+        }
+
+        return res;
+      } catch (error) {
+        // Update run status to failed
+        if (templateId) {
+          await client
+            .from("runs")
+            .update({
+              status: "failed",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("template_id", templateId);
+        }
+        throw error;
       }
-
-      return response.json();
+    },
+    onError: (error) => {
+      // Handle any error logging or user feedback here
+      console.error("Scraping failed:", error);
+    },
+    onSuccess: () => {
+      // Handle any success actions here
+      console.log("Scraping completed successfully");
     },
   });
 
@@ -138,19 +232,19 @@ export default function TransitionPanelCard() {
 
           <div className="space-y-4">
             {selectedFields.map((field) => (
-              <div
-                key={field}
-                className="flex items-center justify-between rounded-md border p-2 dark:border-zinc-700"
-              >
-                <span className="capitalize">{field}</span>
+              <div className="flex items-center gap-2" key={field}>
+                <div className="flex items-center justify-between rounded-md border p-2 dark:border-zinc-700 w-full">
+                  <span className="capitalize">{field}</span>
+                </div>
                 <Button
+                  variant="ghost"
                   onClick={() => {
                     setSelectedFields(
                       selectedFields.filter((f) => f !== field)
                     );
                   }}
                 >
-                  Remove
+                  <CircleMinus className="h-4 w-4" />
                 </Button>
               </div>
             ))}
@@ -169,7 +263,8 @@ export default function TransitionPanelCard() {
                     ))}
                   </SelectContent>
                 </Select>
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     if (
                       currentField &&
@@ -180,10 +275,9 @@ export default function TransitionPanelCard() {
                     }
                   }}
                   disabled={!currentField}
-                  className="flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-white hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-800"
                 >
                   <PlusCircle className="h-4 w-4" />
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -334,12 +428,29 @@ export default function TransitionPanelCard() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // If we're on the authentication step (step 3)
     if (activeIndex === 3) {
-      // On the authentication step
-      scrapeMutation.mutate();
+      setIsCreatingTemplate(true);
+      setTemplateError(null);
+
+      try {
+        const newTemplateId = await createTemplateAndRun();
+        setTemplateId(newTemplateId);
+        scrapeMutation.mutate();
+        // Move to next step after initiating the scraping
+        handleSetActiveIndex(activeIndex + 1);
+      } catch (error) {
+        setTemplateError("Failed to initialize extraction");
+        // Don't navigate if there's an error
+        return;
+      } finally {
+        setIsCreatingTemplate(false);
+      }
+      return; // Exit the function after handling the extraction step
     }
 
+    // For all other steps, just navigate if not on the last step
     if (activeIndex < STEPS.length - 1) {
       handleSetActiveIndex(activeIndex + 1);
     }
@@ -447,14 +558,26 @@ export default function TransitionPanelCard() {
 
           <div className="flex justify-between p-4 bg-black/20 backdrop-blur-sm">
             {activeIndex > 0 ? (
-              <Button onClick={() => handleSetActiveIndex(activeIndex - 1)}>
+              <Button
+                variant="secondary"
+                onClick={() => handleSetActiveIndex(activeIndex - 1)}
+              >
                 Previous
               </Button>
             ) : (
               <div />
             )}
-            <Button onClick={handleNext} disabled={isNextDisabled()}>
-              {activeIndex === STEPS.length - 1
+            <Button
+              onClick={handleNext}
+              disabled={
+                isNextDisabled() ||
+                isCreatingTemplate ||
+                (activeIndex === 4 && scrapeMutation.isPending)
+              }
+            >
+              {isCreatingTemplate
+                ? "Creating Template..."
+                : activeIndex === STEPS.length - 1
                 ? "Close"
                 : activeIndex === 3
                 ? "Extract"
