@@ -121,19 +121,7 @@ export default function TransitionPanelCard() {
   const scrapeMutation = useMutation<ScrapingResult>({
     mutationFn: async () => {
       try {
-        // Simulate API call with mock data
-        // const res = await new Promise<ScrapingResult>((resolve, reject) => {
-        //   setTimeout(() => {
-        //     // Simulate 90% success rate
-        //     if (Math.random() > 0.1) {
-        //       resolve(data);
-        //     } else {
-        //       reject(new Error("Failed to extract data"));
-        //     }
-        //   }, 2000);
-        // });
-
-        const res = fetch("https://api.tejasvajaitly.com/scrape", {
+        const res = await fetch("https://api.mole.tejasvajaitly.com/scrape", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -152,17 +140,12 @@ export default function TransitionPanelCard() {
           }),
         });
 
-        // Update run status to success
-        if (templateId) {
-          await client
-            .from("runs")
-            .update({
-              status: "success",
-            })
-            .eq("template_id", templateId);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
 
-        return res;
+        const data = await res.json();
+        return data as ScrapingResult;
       } catch (error) {
         // Update run status to failed
         if (templateId) {
@@ -178,11 +161,9 @@ export default function TransitionPanelCard() {
       }
     },
     onError: (error) => {
-      // Handle any error logging or user feedback here
       console.error("Scraping failed:", error);
     },
     onSuccess: () => {
-      // Handle any success actions here
       console.log("Scraping completed successfully");
     },
   });
