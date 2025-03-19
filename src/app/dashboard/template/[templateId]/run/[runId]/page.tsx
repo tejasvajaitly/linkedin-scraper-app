@@ -22,9 +22,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExportButtons } from "./export-buttons";
 import { RerunButton } from "./rerun-button";
+import { use } from "react";
 
-export default async function Page({ params }: { params: { runId: string } }) {
-  const { runId } = await params;
+interface PageProps {
+  params: Promise<{
+    runId: string;
+    templateId: string;
+  }>;
+}
+
+export default async function Page({ params }: PageProps) {
+  const resolvedParams = use(params);
+  const { runId } = resolvedParams;
   const client = await createClerkSupabaseClientSsr();
   const { data: run } = await client
     .from("runs")
