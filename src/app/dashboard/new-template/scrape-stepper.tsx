@@ -20,6 +20,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface LinkedInProfile {
   name: string;
@@ -110,6 +111,7 @@ export default function ScrapeStepper({
         throw runError || new Error("Failed to create run");
       }
 
+      toast.success("Started new extraction run");
       return { template, run };
     },
     onSuccess: (data) => {
@@ -124,6 +126,7 @@ export default function ScrapeStepper({
       setError(
         error instanceof Error ? error.message : "Failed to start scraping"
       );
+      toast.error("Failed to start extraction");
     },
   });
 
@@ -186,6 +189,7 @@ export default function ScrapeStepper({
     eventSource.addEventListener("error", async (e: MessageEvent) => {
       const data = JSON.parse(e.data);
       setError(data.message);
+      toast.error(`Extraction error: ${data.message}`);
       setSteps((prev) =>
         prev.map((step) =>
           step.status === "in-progress" ? { ...step, status: "error" } : step
@@ -198,6 +202,7 @@ export default function ScrapeStepper({
     eventSource.addEventListener("result", async (e: MessageEvent) => {
       const data = JSON.parse(e.data);
       setResult(data);
+      toast.success("Extraction completed successfully");
       updateStep(4, "Finished", "complete");
       await updateRunStatus(runId, "success", data.results);
       eventSource.close();
@@ -222,7 +227,14 @@ export default function ScrapeStepper({
           error_message: error,
         })
         .eq("id", runId);
+
+      if (status === "success") {
+        toast.success("Run status updated successfully");
+      } else if (status === "failed") {
+        toast.error("Run failed");
+      }
     } catch (error) {
+      toast.error("Failed to update run status");
       console.error("Failed to update run status:", error);
     }
   };

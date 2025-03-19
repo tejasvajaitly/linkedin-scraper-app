@@ -19,6 +19,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useSession, useUser } from "@clerk/nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 // Add this interface for typing
 interface ScrapingResult {
@@ -107,8 +108,10 @@ export default function TransitionPanelCard() {
         throw runError;
       }
 
+      toast.success("Template created successfully");
       return template.id; // Return template ID for future reference
     } catch (error) {
+      toast.error("Failed to create template");
       console.error("Error creating template and run:", error);
       throw error;
     }
@@ -145,8 +148,10 @@ export default function TransitionPanelCard() {
         }
 
         const data = await res.json();
+        toast.success("Data extraction completed successfully");
         return data as ScrapingResult;
       } catch (error) {
+        toast.error("Failed to extract data from LinkedIn");
         // Update run status to failed
         if (templateId) {
           await client
@@ -157,14 +162,17 @@ export default function TransitionPanelCard() {
             })
             .eq("template_id", templateId);
         }
+        console.error("Scraping failed:", error);
+        toast.error(`Scraping failed: ${error}`);
         throw error;
       }
     },
     onError: (error) => {
       console.error("Scraping failed:", error);
+      toast.error(`Scraping failed: ${error.message}`);
     },
     onSuccess: () => {
-      console.log("Scraping completed successfully");
+      toast.success("Scraping completed successfully");
     },
   });
 

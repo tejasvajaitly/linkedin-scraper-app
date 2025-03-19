@@ -22,14 +22,10 @@ import { useRouter } from "next/navigation";
 export default function TransitionPanelCard() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [name, setName] = useState("jhhj");
-  const [linkedinUrl, setLinkedinUrl] = useState(
-    "https://www.linkedin.com/search/results/people/?keywords=founding%20engineer&origin=SWITCH_SEARCH_VERTICAL&sid=f0)"
-  );
-  const [selectedFields, setSelectedFields] = useState<string[]>(["Url"]);
-  const [cookie, setCookie] = useState(
-    "AQEDASBPaYkCKBZFAAABlaO-s88AAAGVx8s3z00AH-yfsyS1GjkBgUdBIHGfk2PMXSDpdCM58xI8psJSS2vlJ-U6_RzoNHuslpVlsLAG9J4g2b-wa4pQab2iHSiDgn2x0bNUHwokqGp1InM8MuD9K1jj"
-  );
+  const [name, setName] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  const [cookie, setCookie] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [ref, bounds] = useMeasure();
 

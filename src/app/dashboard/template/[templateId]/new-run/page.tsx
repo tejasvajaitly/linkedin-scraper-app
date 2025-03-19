@@ -17,7 +17,8 @@ import { useSession } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function NewRunPage({
   params,
@@ -77,6 +78,17 @@ export default function NewRunPage({
 
       if (error) throw error;
       return data;
+    },
+  });
+
+  // When starting a new run
+  const startRunMutation = useMutation({
+    mutationFn: async () => {
+      // ... run creation logic
+      toast.success("Started new extraction run");
+    },
+    onError: (error) => {
+      toast.error("Failed to start new run");
     },
   });
 

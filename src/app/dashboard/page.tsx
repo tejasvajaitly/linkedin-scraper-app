@@ -19,9 +19,10 @@ import { useUser } from "@clerk/nextjs";
 import { useSession } from "@clerk/nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function Page() {
-  const { user } = useUser();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const { session } = useSession();
 
   function createClerkSupabaseClient() {
@@ -53,24 +54,30 @@ export default function Page() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["templates"],
+    queryKey: ["templates", user?.id],
     queryFn: async () => {
-      const { data, error } = await client
-        .from("templates")
-        .select(
-          `
+      try {
+        const { data, error } = await client.from("templates").select(`
           *,
           runs (
             status,
             created_at
           )
-        `
-        )
-        .order("created_at", { foreignTable: "runs" });
+        `);
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          toast.error("Failed to load templates");
+          throw error;
+        }
+
+        toast.success("Templates loaded successfully");
+        return data;
+      } catch (error) {
+        toast.error("Error loading templates");
+        throw error;
+      }
     },
+    enabled: !!user && !!session,
   });
 
   const getStatusIcon = (status: string) => {
@@ -85,6 +92,33 @@ export default function Page() {
         return <AlertCircle className="w-4 h-4 text-yellow-500" />;
     }
   };
+
+  if (!isUserLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-semibold">Access Denied</h2>
+          <p className="text-muted-foreground">
+            Please sign in to view your templates
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/sign-in">Sign In</Link>
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -109,20 +143,31 @@ export default function Page() {
 
   return (
     <div className="p-4 space-y-6">
-      {/* Header with New Template Button */}
-      <div className="flex items-center justify-between">
+      {/* Header with greeting and New Template Button */}
+      <div className="space-y-6">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Templates</h1>
-          <p className="text-sm text-muted-foreground">
-            {templates?.length || 0} total templates
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Hello, {user?.firstName || "there"}
+          </h1>
+          <p className="text-muted-foreground">
+            Here are your LinkedIn scraping templates
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/new-template">
-            <Plus className="w-4 h-4 mr-2" />
-            New Template
-          </Link>
-        </Button>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h2 className="text-xl font-medium tracking-tight">Templates</h2>
+            <p className="text-sm text-muted-foreground">
+              {templates?.length || 0} total templates
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/dashboard/new-template">
+              <Plus className="w-4 h-4 mr-2" />
+              New Template
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Templates List */}
