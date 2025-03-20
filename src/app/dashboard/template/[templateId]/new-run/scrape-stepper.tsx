@@ -338,9 +338,7 @@ export default function ScrapeStepper({
 
                 <Button
                   className="w-full"
-                  onClick={() =>
-                    router.push(`/dashboard/template/${templateId}/new-run`)
-                  }
+                  onClick={() => window.location.reload()}
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Try Again with New Cookie
