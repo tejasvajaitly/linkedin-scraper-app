@@ -37,7 +37,7 @@ Mole is built to serve as a robust front-end for managing data extraction proces
 - **Database:** 
   - [Supabase](https://supabase.com/)
 - **Data Extraction & Processing:** 
-  - [PlayWrite](https://playwright.dev/)
+  - [Playwright](https://playwright.dev/)
   - [OpenAI LLM](https://openai.com/)
 - **Authentication:** 
   - [Clerk](https://clerk.dev/)
